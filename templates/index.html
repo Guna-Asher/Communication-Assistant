@@ -80,7 +80,41 @@
         
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'en-US';
+        
+        // Set language based on browser support
+        const supportedLanguages = ['en-US', 'en-GB', 'en'];
+        let languageSet = false;
+        
+        // Try to detect browser's preferred language
+        const browserLang = navigator.language || navigator.userLanguage || 'en-US';
+        
+        // Use browser language if it's English-based, otherwise default to en-US
+        if (browserLang.startsWith('en')) {
+            recognition.lang = browserLang;
+        } else {
+            recognition.lang = 'en-US';
+        }
+        
+        // Add fallback for language-not-supported error
+        recognition.onerror = (event) => {
+            if (event.error === 'language-not-supported') {
+                console.warn('Language not supported, trying fallback to en-US');
+                recognition.lang = 'en-US';
+                status.textContent = 'Trying English (US)...';
+                
+                // Retry with en-US
+                setTimeout(() => {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        status.textContent = 'Speech recognition not available in your region';
+                    }
+                }, 1000);
+            } else {
+                status.textContent = `Error: ${event.error}`;
+                console.error('Speech recognition error:', event.error);
+            }
+        };
 
         // DOM elements
         const startBtn = document.getElementById('start-btn');
