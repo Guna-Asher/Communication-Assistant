@@ -42,10 +42,36 @@
     </div>
 
     <script>
-        // Check browser support
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            document.getElementById('status').textContent = 'Speech recognition not supported in this browser';
-            document.getElementById('start-btn').disabled = true;
+        // Check browser support and permissions
+        function checkSpeechRecognitionSupport() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                document.getElementById('status').textContent = 'Speech recognition not supported in this browser';
+                document.getElementById('start-btn').disabled = true;
+                return false;
+            }
+            
+            // Check HTTPS requirement
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                document.getElementById('status').textContent = 'HTTPS required for speech recognition';
+                document.getElementById('start-btn').disabled = true;
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Request microphone permissions
+        async function requestMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (err) {
+                console.error('Microphone permission denied:', err);
+                return false;
+            }
         }
 
         // Initialize speech recognition
